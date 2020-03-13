@@ -4,10 +4,10 @@ from functools import wraps
 from jose import jwt
 from urllib.request import urlopen
 
-
-AUTH0_DOMAIN = 'udacity-fsnd.auth0.com'
+# Defining Auth0 information
+AUTH0_DOMAIN = 'dkhundley.auth0.com'
 ALGORITHMS = ['RS256']
-API_AUDIENCE = 'dev'
+API_AUDIENCE = 'coffeeshop'
 
 ## AuthError Exception
 # -----------------------------------------------------------------------------
@@ -144,22 +144,21 @@ def verify_decode_jwt(token):
         'description': 'Unable to find appropriate key.'
     }, 400)
 
-'''
-@TODO implement @requires_auth(permission) decorator method
-    @INPUTS
-        permission: string permission (i.e. 'post:drink')
 
-    it should use the get_token_auth_header method to get the token
-    it should use the verify_decode_jwt method to decode the jwt
-    it should use the check_permissions method validate claims and check the requested permission
-    return the decorator which passes the decoded payload to the decorated method
-'''
+# Defining a function to create a nice Python decorator to easily ensure if auhtoirzation info is present
+# before allowing user to perform any activities.
 def requires_auth(permission=''):
     def requires_auth_decorator(f):
         @wraps(f)
         def wrapper(*args, **kwargs):
             token = get_token_auth_header()
-            payload = verify_decode_jwt(token)
+            try:
+                payload = verify_decode_jwt(token)
+            except:
+                raise AuthError({
+                    'code': 'invalid_token',
+                    'description': 'Token could not be verified.'
+                }, 401)
             check_permissions(permission, payload)
             return f(payload, *args, **kwargs)
 
