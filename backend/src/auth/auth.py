@@ -51,35 +51,98 @@ def get_token_auth_header():
            'description': 'Token not found.'
        }, 401)
 
-'''
-@TODO implement check_permissions(permission, payload) method
-    @INPUTS
-        permission: string permission (i.e. 'post:drink')
-        payload: decoded jwt payload
+    # Grabbing token from auth parts
+    token = parts[1]
 
-    it should raise an AuthError if permissions are not included in the payload
-        !!NOTE check your RBAC settings in Auth0
-    it should raise an AuthError if the requested permission string is not in the payload permissions array
-    return true otherwise
-'''
+    return token
+
+
+
+# Defining function to check if user has proper permissions given auth credentials
 def check_permissions(permission, payload):
-    raise Exception('Not Implemented')
+    # Checking to see if permissions are included in JWT
+    if 'permissions' not in payload:
+        raise AuthError({
+            'code': 'invalid_claims'
+            'description': 'Permissions not found in JWT.'
+        }, 400)
 
-'''
-@TODO implement verify_decode_jwt(token) method
-    @INPUTS
-        token: a json web token (string)
+    # Checking to see if permission from JWT matches what's available in general
+    if permission not in payload['permissions']:
+        raise AuthError({
+            'code': 'unauthorized',
+            'description': 'Permission not authorized.'
+        }, 403)
 
-    it should be an Auth0 token with key id (kid)
-    it should verify the token using Auth0 /.well-known/jwks.json
-    it should decode the payload from the token
-    it should validate the claims
-    return the decoded payload
+    # If all checks out from above, return true
+    return True
 
-    !!NOTE urlopen has a common certificate error described here: https://stackoverflow.com/questions/50236117/scraping-ssl-certificate-verify-failed-error-for-http-en-wikipedia-org
-'''
+
+
+# Defining a function to check that the provided token matches what is expected from Auth0
 def verify_decode_jwt(token):
-    raise Exception('Not Implemented')
+    # Getting the public key from Auth0
+    jsonurl = urlopen(f'https://{AUTH0_DOMAIN}/.well-known/jwk.json')
+    jwks = json.loads(jsonurl.read())
+
+    # Getting header information from the provided token
+    unverified_header = jwt.get_unverified_header(token)
+
+    # Instantiating empty object to append RSA key info to
+    rsa_key = {}
+
+    # Checking to see if 'kid' is in the unverified header
+    if 'kid' not in unverified_header:
+        raise AuthError({
+            'code': 'invalid_header',
+            'description': 'Authoirization malformed.'
+        }, 401)
+
+    # Appending information to RSA key dictionary from jwks if 'kid' matches the unverified header
+    for key in jwks['keys']:
+        if key['kid'] == unverified_header['kid']:
+            rsa_key = {
+                'kty': key['kty'],
+                'kid': key['kid'],
+                'use': key['use'],
+                'n': key['n'],
+                'e': key['e']
+            }
+
+    # Getting payload information from the token using key if everything checks out fine (else raises error)
+    if rsa_key:
+        try:
+            payload = jwt.decode(
+                token,
+                rsa_key,
+                algorithms = ALGORITHMS,
+                audience = API_AUDIENCE,
+                issuer = 'https://' + AUTH0_DOMAIN + '/'
+            )
+
+            return payload
+
+        # Handling respective error scenarios
+        except jwt.ExpiredSignatureError:
+            raise AuthError({
+                'code': 'token_expired',
+                'description': 'Token expired.'
+            }, 401)
+        except jwt.JWTClaimsError:
+            raise AuthError({
+                'code': 'invalid_claims',
+                'description': 'Incorrect claims. Please check the autdience and issuer.'
+            }, 401)
+        except Exception:
+            raise AuthError({
+                'code': 'invalid_header',
+                'description': 'Unable to parse authentication token.'
+            }, 400)
+    # If RSA_key info not present, raising AuthError
+    raise AuthError({
+        'code': 'invalid_header',
+        'description': 'Unable to find appropriate key.'
+    }, 400)
 
 '''
 @TODO implement @requires_auth(permission) decorator method
