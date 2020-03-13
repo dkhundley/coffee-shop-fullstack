@@ -16,7 +16,7 @@ CORS(app)
 !! NOTE THIS WILL DROP ALL RECORDS AND START YOUR DB FROM SCRATCH
 !! NOTE THIS MUST BE UNCOMMENTED ON FIRST RUN
 '''
-# db_drop_and_create_all()
+db_drop_and_create_all()
 
 ## ROUTES
 # -----------------------------------------------------------------------------
@@ -55,16 +55,6 @@ def get_drinks_detail(jwt):
     except:
         abort(404)
 
-'''
-@TODO implement endpoint
-    POST /drinks
-        it should create a new row in the drinks table
-        it should require the 'post:drinks' permission
-        it should contain the drink.long() data representation
-    returns status code 200 and json {"success": True, "drinks": drink} where drink an array containing only the newly created drink
-        or appropriate status code indicating reason for failure
-'''
-
 # Defining endpoint to post new drinks and their respective info if user has proper creds
 @app.route('/drinks', methods = ['POST'])
 @requires_auth('post:drinks')
@@ -101,7 +91,7 @@ def post_new_drinks(jwt):
 
 
 # Defining endpoint to update drink information if user has proper creds
-@app.route('drinks/<id>', methods = ['PATCH'])
+@app.route('/drinks/<id>', methods = ['PATCH'])
 @requires_auth('patch:drinks')
 def update_drink(jwt, id):
     # Querying drink using provided ID

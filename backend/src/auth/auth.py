@@ -63,7 +63,7 @@ def check_permissions(permission, payload):
     # Checking to see if permissions are included in JWT
     if 'permissions' not in payload:
         raise AuthError({
-            'code': 'invalid_claims'
+            'code': 'invalid_claims',
             'description': 'Permissions not found in JWT.'
         }, 400)
 
@@ -82,7 +82,7 @@ def check_permissions(permission, payload):
 # Defining a function to check that the provided token matches what is expected from Auth0
 def verify_decode_jwt(token):
     # Getting the public key from Auth0
-    jsonurl = urlopen(f'https://{AUTH0_DOMAIN}/.well-known/jwk.json')
+    jsonurl = urlopen(f'https://{AUTH0_DOMAIN}/.well-known/jwks.json')
     jwks = json.loads(jsonurl.read())
 
     # Getting header information from the provided token
@@ -95,7 +95,7 @@ def verify_decode_jwt(token):
     if 'kid' not in unverified_header:
         raise AuthError({
             'code': 'invalid_header',
-            'description': 'Authoirization malformed.'
+            'description': 'Authorization malformed.'
         }, 401)
 
     # Appending information to RSA key dictionary from jwks if 'kid' matches the unverified header
@@ -115,9 +115,9 @@ def verify_decode_jwt(token):
             payload = jwt.decode(
                 token,
                 rsa_key,
-                algorithms = ALGORITHMS,
-                audience = API_AUDIENCE,
-                issuer = 'https://' + AUTH0_DOMAIN + '/'
+                algorithms=ALGORITHMS,
+                audience=API_AUDIENCE,
+                issuer='https://' + AUTH0_DOMAIN + '/'
             )
 
             return payload
