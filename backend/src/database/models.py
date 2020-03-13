@@ -25,9 +25,48 @@ db_drop_and_create_all()
     can be used to initialize a clean database
     !!NOTE you can change the database_filename variable to have multiple verisons of a database
 '''
+# Creating new function to create a handful of test entries for our database
+def db_test_records():
+    drink_1 = (Drink(
+        title = "Coffee",
+        recipe =
+            '''{
+                "name": "beans",
+                "color": "brown",
+                "parts": 3
+            }'''
+    ))
+
+    drink_2 = (Drink(
+        title = "Frappe",
+        recipe =
+            '''{
+                "name": "cream",
+                "color": "whiteish",
+                "parts": 2
+            }'''
+    ))
+
+    drink_3 = (Drink(
+        title = "Lemonade",
+        recipe =
+            '''{
+                "name": "lemons",
+                "color": "yellow",
+                "parts": 1
+            }'''
+    ))
+
+    # Inserting test drinks
+    drink_1.insert()
+    drink_2.insert()
+    drink_3.insert()
+
+
 def db_drop_and_create_all():
     db.drop_all()
     db.create_all()
+#    db_test_records()
 
 '''
 Drink
@@ -47,8 +86,10 @@ class Drink(db.Model):
         short form representation of the Drink model
     '''
     def short(self):
-        print(json.loads(self.recipe))
-        short_recipe = [{'color': r['color'], 'parts': r['parts']} for r in json.loads(self.recipe)]
+        short_recipe = {}
+        for r in json.loads(self.recipe):
+            if r == 'color' or r =='parts':
+                short_recipe[r] = json.loads(self.recipe)[r]
         return {
             'id': self.id,
             'title': self.title,
@@ -65,6 +106,7 @@ class Drink(db.Model):
             'title': self.title,
             'recipe': json.loads(self.recipe)
         }
+
 
     '''
     insert()

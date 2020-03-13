@@ -16,7 +16,7 @@ CORS(app)
 !! NOTE THIS WILL DROP ALL RECORDS AND START YOUR DB FROM SCRATCH
 !! NOTE THIS MUST BE UNCOMMENTED ON FIRST RUN
 '''
-db_drop_and_create_all()
+#db_drop_and_create_all()
 
 ## ROUTES
 # -----------------------------------------------------------------------------
@@ -26,12 +26,12 @@ def get_drinks():
     # Attempting to query and return drink information
     try:
         # Querying drinks using sqlalchemy
-        drinks = Drink.query.all()
+        drinks = Drink.query.order_by(Drink.id).all()
 
         # Returning shortened drink information as json
         return jsonify({
             'success': True,
-            'drinks': [drink.short for drink in drinks]
+            'drinks': [drink.short() for drink in drinks]
         })
     except:
         abort(404)
@@ -45,7 +45,7 @@ def get_drinks_detail(jwt):
     # Attempting to query and return long drink information
     try:
         # Querying drinks using sqlalchemy
-        drinks = Drink.query.all()
+        drinks = Drink.query.order_by(Drink.id).all()
 
         # Returning long drink information as json
         return jsonify({
